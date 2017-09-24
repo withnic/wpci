@@ -1,0 +1,51 @@
+# PHP CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-php/ for more details
+#
+version: 2
+jobs:
+  build:
+    docker:
+      # specify the version you desire here
+      - image: withnic/docker-wp:latest
+      - image: circleci/mysql:5.7
+        command: mysqld
+        environment:
+          MYSQL_DATABASE: wordpress
+          MYSQL_ROOT_PASSWORD: password
+
+      # Specify service dependencies here if necessary
+      # CircleCI maintains a library of pre-built images
+      # documented at https://circleci.com/docs/2.0/circleci-images/
+      # - image: circleci/mysql:9.4
+
+    working_directory: ~/repo
+
+    steps:
+      - checkout
+
+      # Download and cache dependencies
+#      - restore_cache:
+#          keys:
+#          - v1-dependencies-{{ checksum "composer.json" }}
+#          # fallback to using the latest cache if no exact match is found
+#          - v1-dependencies-
+#      - run: composer install -n --prefer-dist
+
+#      - save_cache:
+#          paths:
+#            - ./vendor
+#          key: v1-dependencies-{{ checksum "composer.json" }}
+
+      - run:
+          name: Wait for MySQL DB
+          command: sleep 60
+
+      # install tests
+      - run: ./bin/install-wp-tests.sh test root password 127.0.0.1:3306 4.8.1
+
+      # run plugin test
+      - run: phpunit --configuration ./plugins/testplugin/phpunit.xml.dist
+
+      # run theme test
+      - run: phpunit --configuration ./themes/origin/phpunit.xml.dist
